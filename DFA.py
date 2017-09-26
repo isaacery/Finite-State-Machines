@@ -26,17 +26,17 @@ class DFA:
         return state
 
     def minimize(self):
-        marked = set()
+        marked = set()  # a pair of states are marked if they cannot be merged
         unreachable = self.find_unreachable()
-        self.states -= unreachable
-        for state in unreachable:
+        self.states -= unreachable  # remove unreachable states
+        for state in unreachable:  # remove transitions involving unreachable states
             for c in self.alphabet:
                 del self.transitions[(state, c)]
         pairs = self.pairs(self.states - self.find_unreachable())
         for f in self.accepting_states:
-            for (p,q) in pairs:
+            for (p, q) in pairs:  # mark all pairs where one is an accepting state and the other is not
                 if (p == f) & (q != f) | (q == f) & (p != f):  # xor
-                    marked.add((p,q))
+                    marked.add((p, q))
         changed = True
         while changed:  # while a pair has been marked in the last cycle
             unmarked = pairs - marked
@@ -56,15 +56,15 @@ class DFA:
         self.merge(merge_states)
 
     def merge(self, states):
-        new_state = ''.join(states)
+        new_state = ''.join(states)  # name the merged state the concatenation of the old state's names
         update_dict = {}
         remove_keys = set()
         for state in states:
-            if state in self.accepting_states:
+            if state in self.accepting_states:  # if any one state is accepting all will be
                 self.accepting_states.add(new_state)
-            if state in self.start_state:
+            if state in self.start_state:  # as should the start state
                 self.start_state = new_state
-            for ((p, b), q) in self.transitions.items():
+            for ((p, b), q) in self.transitions.items():  # update transitions to re-route through new state
                 if q == state:
                     if p in states:
                         update_dict[(new_state, b)] = new_state
@@ -84,7 +84,7 @@ class DFA:
         for key in remove_keys:
             if key in self.transitions:
                 del self.transitions[key]
-        self.transitions.update(update_dict)
+        self.transitions.update(update_dict)  # update to the new transitions
 
     def find_unreachable(self):
         marked = {self.start_state}
@@ -92,6 +92,7 @@ class DFA:
         while changed:  # while a state has been marked in the last cycle
             changed = False  # will change to True if any state is marked in cycle
             for ((p, b), q) in self.transitions.items():
+                # mark all states reachable via transition(s) from marked state(s)
                 if (p in marked) & (q in (self.states - marked)):
                     marked.add(q)
                     print("Marked:", q)
@@ -115,7 +116,7 @@ print(machine1)
 machine1.minimize()
 print(machine1)
 
-
+# same as trans1 but with a set of unreachable states
 trans2 = {('q0', 'a'): 'q1', ('q0', 'b'): 'q3', ('q1', 'a'): 'q2', ('q1', 'b'): 'q3',
           ('q2', 'a'): 'q0', ('q2', 'b'): 'q3', ('q3', 'a'): 'q1', ('q3', 'b'): 'q3',
           ('q4', 'a'): 'q5', ('q4', 'b'): 'q4', ('q5', 'a'): 'q4', ('q5', 'b'): 'q5'}
