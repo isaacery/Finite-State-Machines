@@ -33,10 +33,10 @@ class DFA:
             for c in self.alphabet:
                 del self.transitions[(state, c)]
         pairs = self.pairs(self.states - self.find_unreachable())
-        for f in self.accepting_states:
-            for (p, q) in pairs:  # mark all pairs where one is an accepting state and the other is not
-                if (p == f) & (q != f) | (q == f) & (p != f):  # xor
-                    marked.add((p, q))
+        for (p, q) in pairs:  # mark all pairs where one is an accepting state and the other is not
+            if (p in self.accepting_states) & (q not in self.accepting_states) \
+               | (q in self.accepting_states) & (p not in self.accepting_states):  # xor
+                marked.add((p, q))
         changed = True
         while changed:  # while a pair has been marked in the last cycle
             unmarked = pairs - marked
@@ -45,15 +45,12 @@ class DFA:
                 for c in self.alphabet:
                     r = self.transitions[(p, c)]
                     s = self.transitions[(q, c)]
-                    if (r in marked) & (s in marked):
+                    if ((r, s) in marked) | ((s, r) in marked):
                         marked.add((p, q))
                         changed = True
         unmarked = pairs - marked
-        merge_states = set()
         for (p, q) in unmarked:
-            merge_states.add(p)
-            merge_states.add(q)
-        self.merge(merge_states)
+            self.merge({p, q})  # not sure if correct. E.g should q12 and q23 merge to make q123?
 
     def merge(self, states):
         new_state = ''.join(states)  # name the merged state the concatenation of the old state's names
@@ -62,6 +59,7 @@ class DFA:
         for state in states:
             if state in self.accepting_states:  # if any one state is accepting all will be
                 self.accepting_states.add(new_state)
+                self.accepting_states.remove(state)
             if state in self.start_state:  # as should the start state
                 self.start_state = new_state
             for ((p, b), q) in self.transitions.items():  # update transitions to re-route through new state
@@ -95,7 +93,6 @@ class DFA:
                 # mark all states reachable via transition(s) from marked state(s)
                 if (p in marked) & (q in (self.states - marked)):
                     marked.add(q)
-                    print("Marked:", q)
                     changed = True
         return self.states - marked
 
@@ -109,22 +106,29 @@ class DFA:
         return pairs
 
 
-trans1 = {('q0', 'a'): 'q1', ('q0', 'b'): 'q3', ('q1', 'a'): 'q2', ('q1', 'b'): 'q3',
-         ('q2', 'a'): 'q0', ('q2', 'b'): 'q3', ('q3', 'a'): 'q1', ('q3', 'b'): 'q3'}
-machine1 = DFA({'q0', 'q1', 'q2', 'q3'}, {'a', 'b'}, trans1, 'q0', {'q3'})
-print(machine1)
-machine1.minimize()
-print(machine1)
+# trans1 = {('q0', 'a'): 'q1', ('q0', 'b'): 'q3', ('q1', 'a'): 'q2', ('q1', 'b'): 'q3',
+#          ('q2', 'a'): 'q0', ('q2', 'b'): 'q3', ('q3', 'a'): 'q1', ('q3', 'b'): 'q3'}
+# machine1 = DFA({'q0', 'q1', 'q2', 'q3'}, {'a', 'b'}, trans1, 'q0', {'q3'})
+# print(machine1)
+# machine1.minimize()
+# print(machine1)
+#
+# # same as trans1 but with a set of unreachable states
+# trans2 = {('q0', 'a'): 'q1', ('q0', 'b'): 'q3', ('q1', 'a'): 'q2', ('q1', 'b'): 'q3',
+#           ('q2', 'a'): 'q0', ('q2', 'b'): 'q3', ('q3', 'a'): 'q1', ('q3', 'b'): 'q3',
+#           ('q4', 'a'): 'q5', ('q4', 'b'): 'q4', ('q5', 'a'): 'q4', ('q5', 'b'): 'q5'}
+# machine2 = DFA({'q0', 'q1', 'q2', 'q3', 'q4', 'q5'}, {'a', 'b'}, trans2, 'q0', {'q3', 'q4', 'q5'})
+# print(machine2)
+# machine2.minimize()
+# print(machine2)
 
-# same as trans1 but with a set of unreachable states
-trans2 = {('q0', 'a'): 'q1', ('q0', 'b'): 'q3', ('q1', 'a'): 'q2', ('q1', 'b'): 'q3',
-          ('q2', 'a'): 'q0', ('q2', 'b'): 'q3', ('q3', 'a'): 'q1', ('q3', 'b'): 'q3',
-          ('q4', 'a'): 'q5', ('q4', 'b'): 'q4', ('q5', 'a'): 'q4', ('q5', 'b'): 'q5'}
-machine2 = DFA({'q0', 'q1', 'q2', 'q3', 'q4', 'q5'}, {'a', 'b'}, trans2, 'q0', {'q3', 'q4', 'q5'})
-print(machine2)
-machine2.minimize()
-print(machine2)
-
+trans3 = {('q0', 'a'): 'q1', ('q0', 'b'): 'q2', ('q1', 'a'): 'q2', ('q1', 'b'): 'q3', ('q2', 'a'): 'q4',
+          ('q2', 'b'): 'q6', ('q3', 'a'): 'q4', ('q3', 'b'): 'q5', ('q4', 'a'): 'q3', ('q4', 'b'): 'q6',
+          ('q5', 'a'): 'q5', ('q5', 'b'): 'q6', ('q6', 'a'): 'q5', ('q6', 'b'): 'q6'}
+machine3 = DFA({'q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6'}, {'a','b'}, trans3, 'q0', {'q5', 'q6'})
+print(machine3)
+machine3.minimize()
+print(machine3)
 
 
 
