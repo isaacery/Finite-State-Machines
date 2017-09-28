@@ -50,7 +50,11 @@ class DFA:
                         changed = True
         unmarked = pairs - marked
         for (p, q) in unmarked:
-            self.merge({p, q})  # not sure if correct. E.g should q12 and q23 merge to make q123?
+            to_merge = {p, q}
+            for (r, s) in unmarked-{(p, q)}:
+                if (p == r) | (p == s) | (q == r) | (q == s):  # shared elements between pairs merge to one state
+                    to_merge.update({r, s})
+            self.merge(to_merge)
 
     def merge(self, states):
         new_state = ''.join(states)  # name the merged state the concatenation of the old state's names
