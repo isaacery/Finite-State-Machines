@@ -15,7 +15,7 @@ class DFA:
             output_str += ("[" + str(a) + "] -" + str(b) + "-> [" + str(v) + "] \n \t \t \t")
         return output_str
 
-    def accepts(self, string):
+    def accepts(self, string): # returns true if DFA accepts string
         return self.process(string) in self.accepting_states
 
     def process(self, string, state=None):
@@ -133,8 +133,3 @@ machine3 = DFA({'q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6'}, {'a','b'}, trans3, 'q
 print(machine3)
 machine3.minimize()
 print(machine3)
-
-
-
-
-
